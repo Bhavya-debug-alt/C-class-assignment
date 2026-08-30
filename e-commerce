@@ -1,0 +1,771 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+enum Category
+{
+    ELECTRONICS,
+    CLOTHING,
+    BOOKS,
+    GROCERIES
+};
+
+enum OrderStatus
+{
+    PENDING,
+    CONFIRMED,
+    CANCELLED,
+    DELIVERED
+};
+
+enum PaymentStatus
+{
+    PAYMENT_PENDING,
+    PAYMENT_SUCCESS,
+    PAYMENT_FAILED
+};
+
+enum PaymentMethod
+{
+    CREDIT_CARD,
+    UPI,
+    CASH
+};
+
+union PaymentInfo
+{
+    int last4;
+    char upi[50];
+
+    PaymentInfo()
+    {
+        last4 = 0;
+    }
+};
+
+class Product
+{
+private:
+    int id;
+    char name[50];
+    float price;
+    int stock;
+    Category category;
+
+public:
+    Product()
+    {
+        id = 0;
+        price = 0;
+        stock = 0;
+    }
+
+    Product(int i, char n[], float p, int s, Category c)
+    {
+        id = i;
+        strcpy(name, n);
+        price = p;
+        stock = s;
+        category = c;
+    }
+
+    int getId()
+    {
+        return id;
+    }
+
+    float getPrice()
+    {
+        return price;
+    }
+
+    int getStock()
+    {
+        return stock;
+    }
+
+    bool checkAvailability(int q)
+    {
+        if (q <= stock)
+            return true;
+
+        return false;
+    }
+
+    void updateStock(int q)
+    {
+        stock = stock + q;
+    }
+
+    void displayProduct()
+    {
+        cout << "\nProduct ID: " << id;
+        cout << "\nName: " << name;
+        cout << "\nPrice: Rs. " << price;
+        cout << "\nStock: " << stock;
+        cout << "\nCategory: ";
+
+        if (category == ELECTRONICS)
+            cout << "Electronics";
+        else if (category == CLOTHING)
+            cout << "Clothing";
+        else if (category == BOOKS)
+            cout << "Books";
+        else
+            cout << "Groceries";
+
+        cout << "\n";
+    }
+};
+
+class Customer
+{
+private:
+    int id;
+    char name[50];
+    char email[60];
+    char phone[20];
+    char address[100];
+
+public:
+    Customer()
+    {
+        id = 0;
+    }
+
+    Customer(int i, char n[], char e[], char p[], char a[])
+    {
+        id = i;
+        strcpy(name, n);
+        strcpy(email, e);
+        strcpy(phone, p);
+        strcpy(address, a);
+    }
+
+    int getId()
+    {
+        return id;
+    }
+
+    void displayCustomer()
+    {
+        cout << "\nCustomer ID: " << id;
+        cout << "\nName: " << name;
+        cout << "\nEmail: " << email;
+        cout << "\nPhone: " << phone;
+        cout << "\nAddress: " << address << "\n";
+    }
+
+    void updateDetails()
+    {
+        cin.ignore();
+
+        cout << "Enter new name: ";
+        cin.getline(name, 50);
+
+        cout << "Enter new email: ";
+        cin.getline(email, 60);
+
+        cout << "Enter new phone: ";
+        cin.getline(phone, 20);
+
+        cout << "Enter new address: ";
+        cin.getline(address, 100);
+
+        cout << "Customer details updated.\n";
+    }
+};
+
+struct Order
+{
+    int orderId;
+    int customerId;
+    int productId;
+    int quantity;
+    float totalAmount;
+
+    OrderStatus status;
+    PaymentStatus paymentStatus;
+    PaymentMethod paymentMethod;
+
+    PaymentInfo payment;
+
+    Order()
+    {
+        orderId = 0;
+        customerId = 0;
+        productId = 0;
+        quantity = 0;
+        totalAmount = 0;
+
+        status = PENDING;
+        paymentStatus = PAYMENT_PENDING;
+        paymentMethod = CASH;
+    }
+
+    void displayOrder()
+    {
+        cout << "\n-----------------------------";
+        cout << "\nOrder ID: " << orderId;
+        cout << "\nCustomer ID: " << customerId;
+        cout << "\nProduct ID: " << productId;
+        cout << "\nQuantity: " << quantity;
+        cout << "\nTotal Amount: Rs. " << totalAmount;
+
+        cout << "\nOrder Status: ";
+
+        if (status == PENDING)
+            cout << "Pending";
+        else if (status == CONFIRMED)
+            cout << "Confirmed";
+        else if (status == CANCELLED)
+            cout << "Cancelled";
+        else
+            cout << "Delivered";
+
+        cout << "\nPayment Status: ";
+
+        if (paymentStatus == PAYMENT_PENDING)
+            cout << "Pending";
+        else if (paymentStatus == PAYMENT_SUCCESS)
+            cout << "Success";
+        else
+            cout << "Failed";
+
+        cout << "\nPayment Method: ";
+
+        if (paymentMethod == CREDIT_CARD)
+        {
+            cout << "Credit Card";
+            cout << "\nLast 4 digits: " << payment.last4;
+        }
+        else if (paymentMethod == UPI)
+        {
+            cout << "UPI";
+            cout << "\nUPI ID: " << payment.upi;
+        }
+        else
+        {
+            cout << "Cash";
+        }
+
+        cout << "\n-----------------------------\n";
+    }
+};
+
+Product products[50];
+Customer customers[50];
+Order orders[50];
+
+int productCount = 0;
+int customerCount = 0;
+int orderCount = 0;
+
+int findProduct(int id)
+{
+    for (int i = 0; i < productCount; i++)
+    {
+        if (products[i].getId() == id)
+            return i;
+    }
+
+    return -1;
+}
+
+int findCustomer(int id)
+{
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].getId() == id)
+            return i;
+    }
+
+    return -1;
+}
+
+int findOrder(int id)
+{
+    for (int i = 0; i < orderCount; i++)
+    {
+        if (orders[i].orderId == id)
+            return i;
+    }
+
+    return -1;
+}
+
+void addProduct()
+{
+    int id, stock, c;
+    float price;
+    char name[50];
+
+    cout << "\nEnter product ID: ";
+    cin >> id;
+
+    if (findProduct(id) != -1)
+    {
+        cout << "Product ID already exists.\n";
+        return;
+    }
+
+    cin.ignore();
+
+    cout << "Enter product name: ";
+    cin.getline(name, 50);
+
+    cout << "Enter price: ";
+    cin >> price;
+
+    if (price <= 0)
+    {
+        cout << "Invalid price.\n";
+        return;
+    }
+
+    cout << "Enter stock: ";
+    cin >> stock;
+
+    if (stock < 0)
+    {
+        cout << "Invalid stock.\n";
+        return;
+    }
+
+    cout << "\n0. Electronics";
+    cout << "\n1. Clothing";
+    cout << "\n2. Books";
+    cout << "\n3. Groceries";
+    cout << "\nEnter category: ";
+    cin >> c;
+
+    if (c < 0 || c > 3)
+    {
+        cout << "Invalid category.\n";
+        return;
+    }
+
+    products[productCount] =
+        Product(id, name, price, stock, (Category)c);
+
+    productCount++;
+
+    cout << "Product added successfully.\n";
+}
+
+void showProducts()
+{
+    if (productCount == 0)
+    {
+        cout << "\nNo products found.\n";
+        return;
+    }
+
+    for (int i = 0; i < productCount; i++)
+        products[i].displayProduct();
+}
+
+void addCustomer()
+{
+    int id;
+    char name[50], email[60], phone[20], address[100];
+
+    cout << "\nEnter customer ID: ";
+    cin >> id;
+
+    if (findCustomer(id) != -1)
+    {
+        cout << "Customer ID already exists.\n";
+        return;
+    }
+
+    cin.ignore();
+
+    cout << "Enter name: ";
+    cin.getline(name, 50);
+
+    cout << "Enter email: ";
+    cin.getline(email, 60);
+
+    cout << "Enter phone: ";
+    cin.getline(phone, 20);
+
+    cout << "Enter address: ";
+    cin.getline(address, 100);
+
+    customers[customerCount] =
+        Customer(id, name, email, phone, address);
+
+    customerCount++;
+
+    cout << "Customer added successfully.\n";
+}
+
+void showCustomers()
+{
+    if (customerCount == 0)
+    {
+        cout << "\nNo customers found.\n";
+        return;
+    }
+
+    for (int i = 0; i < customerCount; i++)
+        customers[i].displayCustomer();
+}
+
+void updateCustomer()
+{
+    int id;
+
+    cout << "\nEnter customer ID: ";
+    cin >> id;
+
+    int x = findCustomer(id);
+
+    if (x == -1)
+    {
+        cout << "Invalid customer ID.\n";
+        return;
+    }
+
+    customers[x].updateDetails();
+}
+
+void createOrder()
+{
+    int oid, cid, pid, quantity;
+
+    cout << "\nEnter order ID: ";
+    cin >> oid;
+
+    if (findOrder(oid) != -1)
+    {
+        cout << "Order ID already exists.\n";
+        return;
+    }
+
+    cout << "Enter customer ID: ";
+    cin >> cid;
+
+    if (findCustomer(cid) == -1)
+    {
+        cout << "Invalid customer ID.\n";
+        return;
+    }
+
+    cout << "Enter product ID: ";
+    cin >> pid;
+
+    int p = findProduct(pid);
+
+    if (p == -1)
+    {
+        cout << "Invalid product ID.\n";
+        return;
+    }
+
+    cout << "Enter quantity: ";
+    cin >> quantity;
+
+    if (quantity <= 0)
+    {
+        cout << "Invalid quantity.\n";
+        return;
+    }
+
+    if (products[p].getStock() == 0)
+    {
+        cout << "Product is out of stock.\n";
+        return;
+    }
+
+    if (!products[p].checkAvailability(quantity))
+    {
+        cout << "Not enough stock available.\n";
+        return;
+    }
+
+    orders[orderCount].orderId = oid;
+    orders[orderCount].customerId = cid;
+    orders[orderCount].productId = pid;
+    orders[orderCount].quantity = quantity;
+
+    orders[orderCount].totalAmount =
+        products[p].getPrice() * quantity;
+
+    orders[orderCount].status = PENDING;
+    orders[orderCount].paymentStatus = PAYMENT_PENDING;
+
+    // Reserve the stock when order is created
+    products[p].updateStock(-quantity);
+
+    orderCount++;
+
+    cout << "\nOrder created successfully.\n";
+    cout << "Total amount: Rs. "
+         << orders[orderCount - 1].totalAmount << "\n";
+}
+
+void makePayment()
+{
+    int id, choice;
+
+    cout << "\nEnter order ID: ";
+    cin >> id;
+
+    int x = findOrder(id);
+
+    if (x == -1)
+    {
+        cout << "Invalid order ID.\n";
+        return;
+    }
+
+    if (orders[x].status == CANCELLED)
+    {
+        cout << "Payment cannot be made for a cancelled order.\n";
+        return;
+    }
+
+    cout << "\n0. Credit Card";
+    cout << "\n1. UPI";
+    cout << "\n2. Cash";
+    cout << "\nEnter payment method: ";
+    cin >> choice;
+
+    if (choice < 0 || choice > 2)
+    {
+        orders[x].paymentStatus = PAYMENT_FAILED;
+        cout << "Invalid payment method. Payment failed.\n";
+        return;
+    }
+
+    orders[x].paymentMethod = (PaymentMethod)choice;
+
+    if (choice == CREDIT_CARD)
+    {
+        int n;
+
+        cout << "Enter last 4 digits of card: ";
+        cin >> n;
+
+        if (n < 1000 || n > 9999)
+        {
+            orders[x].paymentStatus = PAYMENT_FAILED;
+            cout << "Invalid card details. Payment failed.\n";
+            return;
+        }
+
+        orders[x].payment.last4 = n;
+    }
+    else if (choice == UPI)
+    {
+        cout << "Enter UPI ID: ";
+        cin >> orders[x].payment.upi;
+
+        if (strlen(orders[x].payment.upi) == 0)
+        {
+            orders[x].paymentStatus = PAYMENT_FAILED;
+            cout << "Invalid UPI ID.\n";
+            return;
+        }
+    }
+
+    orders[x].paymentStatus = PAYMENT_SUCCESS;
+
+    cout << "Payment successful.\n";
+}
+
+void confirmOrder()
+{
+    int id;
+
+    cout << "\nEnter order ID: ";
+    cin >> id;
+
+    int x = findOrder(id);
+
+    if (x == -1)
+    {
+        cout << "Invalid order ID.\n";
+        return;
+    }
+
+    if (orders[x].status == CANCELLED)
+    {
+        cout << "Cancelled order cannot be confirmed.\n";
+        return;
+    }
+
+    if (orders[x].paymentStatus != PAYMENT_SUCCESS)
+    {
+        cout << "Order cannot be confirmed because payment failed or is pending.\n";
+        return;
+    }
+
+    orders[x].status = CONFIRMED;
+
+    cout << "Order confirmed successfully.\n";
+}
+
+void cancelOrder()
+{
+    int id;
+
+    cout << "\nEnter order ID: ";
+    cin >> id;
+
+    int x = findOrder(id);
+
+    if (x == -1)
+    {
+        cout << "Invalid order ID.\n";
+        return;
+    }
+
+    if (orders[x].status == DELIVERED)
+    {
+        cout << "Delivered order cannot be cancelled.\n";
+        return;
+    }
+
+    if (orders[x].status == CANCELLED)
+    {
+        cout << "Order is already cancelled.\n";
+        return;
+    }
+
+    int p = findProduct(orders[x].productId);
+
+    if (p != -1)
+        products[p].updateStock(orders[x].quantity);
+
+    orders[x].status = CANCELLED;
+
+    cout << "Order cancelled successfully.\n";
+}
+
+void deliverOrder()
+{
+    int id;
+
+    cout << "\nEnter order ID: ";
+    cin >> id;
+
+    int x = findOrder(id);
+
+    if (x == -1)
+    {
+        cout << "Invalid order ID.\n";
+        return;
+    }
+
+    if (orders[x].status == CANCELLED)
+    {
+        cout << "Cancelled order cannot be delivered.\n";
+        return;
+    }
+
+    if (orders[x].status != CONFIRMED)
+    {
+        cout << "Only confirmed orders can be delivered.\n";
+        return;
+    }
+
+    orders[x].status = DELIVERED;
+
+    cout << "Order delivered successfully.\n";
+}
+
+void showOrders()
+{
+    if (orderCount == 0)
+    {
+        cout << "\nNo orders found.\n";
+        return;
+    }
+
+    for (int i = 0; i < orderCount; i++)
+        orders[i].displayOrder();
+}
+
+int main()
+{
+    int choice;
+
+    do
+    {
+        cout << "\n\n========== E-COMMERCE SYSTEM ==========";
+        cout << "\n1. Add Product";
+        cout << "\n2. Display Products";
+        cout << "\n3. Add Customer";
+        cout << "\n4. Display Customers";
+        cout << "\n5. Update Customer";
+        cout << "\n6. Create Order";
+        cout << "\n7. Make Payment";
+        cout << "\n8. Confirm Order";
+        cout << "\n9. Cancel Order";
+        cout << "\n10. Deliver Order";
+        cout << "\n11. Display Orders";
+        cout << "\n12. Exit";
+
+        cout << "\nEnter choice: ";
+        cin >> choice;
+
+        switch (choice)
+        {
+        case 1:
+            addProduct();
+            break;
+
+        case 2:
+            showProducts();
+            break;
+
+        case 3:
+            addCustomer();
+            break;
+
+        case 4:
+            showCustomers();
+            break;
+
+        case 5:
+            updateCustomer();
+            break;
+
+        case 6:
+            createOrder();
+            break;
+
+        case 7:
+            makePayment();
+            break;
+
+        case 8:
+            confirmOrder();
+            break;
+
+        case 9:
+            cancelOrder();
+            break;
+
+        case 10:
+            deliverOrder();
+            break;
+
+        case 11:
+            showOrders();
+            break;
+
+        case 12:
+            cout << "\nProgram ended.\n";
+            break;
+
+        default:
+            cout << "\nInvalid choice.\n";
+        }
+
+    } while (choice != 12);
+
+    return 0;
+}
